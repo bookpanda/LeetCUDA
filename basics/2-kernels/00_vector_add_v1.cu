@@ -109,14 +109,16 @@ int main() {
     // Verify results (optional)
     cudaMemcpy(h_c_gpu, d_c, size, cudaMemcpyDeviceToHost);
     bool correct = true;
+    double max_error = 0.0;
     for (int i = 0; i < N; i++) {
         if (fabs(h_c_cpu[i] - h_c_gpu[i]) > 1e-5) {
             correct = false;
+            max_error = fmax(max_error, fabs(h_c_cpu[i] - h_c_gpu[i]));
             break;
         }
     }
     printf("Results are %s\n", correct ? "correct" : "incorrect");
-
+    printf("Max error: %f\n", max_error);
     // Free memory
     free(h_a);
     free(h_b);
