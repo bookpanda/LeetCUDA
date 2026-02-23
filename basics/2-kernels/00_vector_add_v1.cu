@@ -1,7 +1,17 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <cuda_runtime.h>
+
+#define CUDA_CHECK(call) \
+    do { \
+        cudaError_t err = (call); \
+        if (err != cudaSuccess) { \
+            fprintf(stderr, "CUDA error at %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err)); \
+            exit(1); \
+        } \
+    } while (0)
 
 #define N 10000000  // Vector size = 10 million
 #define BLOCK_SIZE 256
@@ -57,13 +67,13 @@ int main() {
     init_vector(h_b, N);
 
     // Allocate device memory
-    cudaMalloc(&d_a, size);
-    cudaMalloc(&d_b, size);
-    cudaMalloc(&d_c, size);
+    CUDA_CHECK(cudaMalloc(&d_a, size));
+    CUDA_CHECK(cudaMalloc(&d_b, size));
+    CUDA_CHECK(cudaMalloc(&d_c, size));
 
     // Copy data to device
-    cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+    CUDA_CHECK(cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice));
 
     // Define grid and block dimensions
     int num_blocks = (N + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -75,7 +85,7 @@ int main() {
     for (int i = 0; i < 3; i++) {
         vector_add_cpu(h_a, h_b, h_c_cpu, N);
         vector_add_gpu<<<num_blocks, BLOCK_SIZE>>>(d_a, d_b, d_c, N);
-        cudaDeviceSynchronize();
+        CUDA_CHECK(cudaDeviceSynchronize());
     }
 
     // Benchmark CPU implementation
@@ -89,32 +99,39 @@ int main() {
     }
     double cpu_avg_time = cpu_total_time / 20.0;
 
-    // Benchmark GPU implementation
+    // Benchmark GPU implementation (use CUDA events for accurate timing)
     printf("Benchmarking GPU implementation...\n");
-    double gpu_total_time = 0.0;
+    cudaEvent_t start_ev, stop_ev;
+    CUDA_CHECK(cudaEventCreate(&start_ev));
+    CUDA_CHECK(cudaEventCreate(&stop_ev));
+    float gpu_total_time = 0.0f;
     for (int i = 0; i < 20; i++) {
-        double start_time = get_time();
+        CUDA_CHECK(cudaEventRecord(start_ev, 0));
         vector_add_gpu<<<num_blocks, BLOCK_SIZE>>>(d_a, d_b, d_c, N);
-        cudaDeviceSynchronize();
-        double end_time = get_time();
-        gpu_total_time += end_time - start_time;
+        CUDA_CHECK(cudaEventRecord(stop_ev, 0));
+        CUDA_CHECK(cudaEventSynchronize(stop_ev));
+        float elapsed = 0.0f;
+        CUDA_CHECK(cudaEventElapsedTime(&elapsed, start_ev, stop_ev));
+        gpu_total_time += elapsed;
     }
-    double gpu_avg_time = gpu_total_time / 20.0;
+    double gpu_avg_time = (double)gpu_total_time / 20.0;
+    cudaEventDestroy(start_ev);
+    cudaEventDestroy(stop_ev);
 
-    // Print results
-    printf("CPU average time: %f milliseconds\n", cpu_avg_time*1000);
-    printf("GPU average time: %f milliseconds\n", gpu_avg_time*1000);
-    printf("Speedup: %fx\n", cpu_avg_time / gpu_avg_time);
+    // Print results (CPU: seconds->ms, GPU: cudaEventElapsedTime already in ms)
+    printf("CPU average time: %f milliseconds\n", cpu_avg_time * 1000);
+    printf("GPU average time: %f milliseconds\n", gpu_avg_time);
+    printf("Speedup: %fx\n", (cpu_avg_time * 1000) / gpu_avg_time);
 
     // Verify results (optional)
-    cudaMemcpy(h_c_gpu, d_c, size, cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaMemcpy(h_c_gpu, d_c, size, cudaMemcpyDeviceToHost));
     bool correct = true;
     double max_error = 0.0;
     for (int i = 0; i < N; i++) {
-        if (fabs(h_c_cpu[i] - h_c_gpu[i]) > 1e-5) {
+        double err = fabs((double)h_c_cpu[i] - (double)h_c_gpu[i]);
+        if (err > 1e-5) {
             correct = false;
-            max_error = fmax(max_error, fabs(h_c_cpu[i] - h_c_gpu[i]));
-            break;
+            max_error = fmax(max_error, err);
         }
     }
     printf("Results are %s\n", correct ? "correct" : "incorrect");
@@ -124,9 +141,9 @@ int main() {
     free(h_b);
     free(h_c_cpu);
     free(h_c_gpu);
-    cudaFree(d_a);
-    cudaFree(d_b);
-    cudaFree(d_c);
+    CUDA_CHECK(cudaFree(d_a));
+    CUDA_CHECK(cudaFree(d_b));
+    CUDA_CHECK(cudaFree(d_c));
 
     return 0;
 }

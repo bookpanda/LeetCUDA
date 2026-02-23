@@ -1,5 +1,12 @@
 # Kernels
 
+## Compile & Run (00_vector_add_v1.cu)
+```bash
+# Must specify -arch=sm_XX for your GPU (e.g. sm_86 for RTX 3090)
+# Without it, the kernel may produce wrong results or zeros on newer GPUs
+nvcc -arch=sm_86 -o a.out 00_vector_add_v1.cu && ./a.out
+```
+
 ## Kernel Launch Params
 
 - Type `dim3` is 3D type for grids and thread blocks which are later feed into the kernel launch configuration.
