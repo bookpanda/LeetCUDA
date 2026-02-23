@@ -1,0 +1,11 @@
+CompileFlags:
+  CompilationDatabase: None
+  Add:
+    - -I/root/code/LeetCUDA/.venv/lib/python3.11/site-packages/torch/include
+    - -I/root/code/LeetCUDA/.venv/lib/python3.11/site-packages/torch/include/torch/csrc/api/include
+    - -I/usr/local/cuda/include
+    - -I/.uv/python_install/cpython-3.11.14-linux-x86_64-gnu/include/python3.11
+    - -D__CUDACC__
+    - -D__CUDA_ARCH__=860
+    - -DWARP_SIZE=32
+    - --cuda-gpu-arch=sm_86
