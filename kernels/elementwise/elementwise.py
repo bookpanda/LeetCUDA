@@ -12,7 +12,8 @@ lib = load(
     name="elementwise_lib",
     sources=["elementwise.cu"],
     extra_cuda_cflags=[
-        "-O3",
+        # "-O3",
+        "-O2",
         "-U__CUDA_NO_HALF_OPERATORS__",
         "-U__CUDA_NO_HALF_CONVERSIONS__",
         "-U__CUDA_NO_HALF2_OPERATORS__",
