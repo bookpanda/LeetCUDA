@@ -12,6 +12,8 @@
 
 #define WARP_SIZE 32
 #define INT4(value) (reinterpret_cast<int4 *>(&(value))[0])
+// groups four float values into a single 16-byte structure
+// instead of four 32-bit load instructions, use only one 128-bit load instruction + align mem access
 #define FLOAT4(value) (reinterpret_cast<float4 *>(&(value))[0])
 #define HALF2(value) (reinterpret_cast<half2 *>(&(value))[0])
 #define BFLOAT2(value) (reinterpret_cast<__nv_bfloat162 *>(&(value))[0])
@@ -33,7 +35,9 @@ __global__ void elementwise_add_f32_kernel(float *a, float *b, float *c,
 __global__ void elementwise_add_f32x4_kernel(float *a, float *b, float *c,
                                              int N) {
   int idx = 4 * (blockIdx.x * blockDim.x + threadIdx.x);
+  // 4 elements per thread, If threadIdx.x is 0, it handles elements 0, 1, 2, 3.
   if (idx < N) {
+    // Go to address idx, but don't just grab one float; grab the whole 16-byte neighborhood and shove it into these registers
     float4 reg_a = FLOAT4(a[idx]);
     float4 reg_b = FLOAT4(b[idx]);
     float4 reg_c;
