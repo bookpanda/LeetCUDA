@@ -1,0 +1,24 @@
+{
+    "configurations": [
+      {
+        "name": "Linux",
+        "includePath": [
+          "${workspaceFolder}/**",
+          "/usr/local/cuda-12.6/include",
+          "/usr/local/cuda/include",
+          "${workspaceFolder}/../vllm/.venv/lib/python3.12/site-packages/torch/include",
+          "${workspaceFolder}/../vllm/.venv/lib/python3.12/site-packages/torch/include/torch/csrc/api/include"
+        ],
+        "defines": [
+          "__CUDACC__",
+          "__CUDA_ARCH__=860",
+          "WARP_SIZE=32"
+        ],
+        "compilerPath": "/usr/bin/g++",
+        "cStandard": "c17",
+        "cppStandard": "c++17",
+        "intelliSenseMode": "linux-gcc-x64"
+      }
+    ],
+    "version": 4
+  }
