@@ -28,3 +28,4 @@ build*
 .idea
 .github/copilot-instructions.md
 AGENTS.md
+*.out
