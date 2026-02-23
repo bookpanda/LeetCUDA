@@ -8,7 +8,11 @@ sudo apt install -y nsight-systems-2025.5.2
 ## Follow along
 1. 
 ```bash
+# compile, -lnvToolsExt links the NVTX (NVIDIA Tools Extension) library to the program. This allows the program to use the NVTX API for profiling.
 nvcc -o 00 00\ nvtx_matmul.cu -lnvToolsExt
+# nsys profile starts the profiler
+# --stats=true = summary mode
+# runs + profiles
 nsys profile --stats=true ./00
 ```
 
