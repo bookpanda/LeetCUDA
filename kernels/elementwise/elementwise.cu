@@ -49,13 +49,14 @@ __global__ void elementwise_add_f32x4_kernel(float *a, float *b, float *c,
   }
 }
 
-// FP16
+// FP16 aka half precision floating point
 // ElementWise Add grid(N/256),
 // block(256) a: Nx1, b: Nx1, c: Nx1, c = elementwise_add(a, b)
 __global__ void elementwise_add_f16_kernel(half *a, half *b, half *c, int N) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < N)
     c[idx] = __hadd(a[idx], b[idx]);
+  // half-precision addition. It tells the hardware to treat the bits as FP16.
 }
 
 // a: Nx1, b: Nx1, c: Nx1, c = elementwise_add(a, b)
@@ -113,7 +114,7 @@ __global__ void elementwise_add_f16x8_pack_kernel(half *a, half *b, half *c,
   LDST128BITS(pack_a[0]) = LDST128BITS(a[idx]); // load 128 bits
   LDST128BITS(pack_b[0]) = LDST128BITS(b[idx]); // load 128 bits
 
-#pragma unroll
+#pragma unroll // unroll the loop to improve performance
   for (int i = 0; i < 8; i += 2) {
     // __hadd2 for half2 x 4
     HALF2(pack_c[i]) = __hadd2(HALF2(pack_a[i]), HALF2(pack_b[i]));
