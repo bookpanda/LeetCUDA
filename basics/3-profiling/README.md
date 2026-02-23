@@ -1,5 +1,10 @@
 # How to Profile your CUDA kernels
 
+## install
+```bash
+sudo apt install -y nsight-systems-2025.5.2
+```
+
 ## Follow along
 1. 
 ```bash
