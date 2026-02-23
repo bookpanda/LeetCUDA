@@ -16,6 +16,7 @@ nvcc -arch=sm_86 -o a.out basics/2-kernels/00_vector_add_v1.cu
 
 # You shouldn’t compile with nvcc directly. This kernel is built as a PyTorch extension via torch.utils.cpp_extension.load(), which adds the Torch, CUDA, and Python include paths.
 TORCH_CUDA_ARCH_LIST=8.6 python elementwise.py
+TORCH_CUDA_ARCH_LIST=8.6 python histogram.py
 ```
 
 ## compile speedup
